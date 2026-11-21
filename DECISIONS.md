@@ -24,9 +24,9 @@
 - Rejected: filtering rows client-side in React or displaying foreign tenant location IDs
 - Why: Client-side filtering leaks data in the network payload, and showing an ORG-B location (e.g., LOC-201 on REC-1077) to ORG-A breaches tenant isolation boundaries.
 
-## Decision: treat VOIDED record in A with active entry in B as an audit discrepancy
-- Rejected: silently ignoring voided status or deleting the record
-- Why: If System A invalidated/voided a transaction but System B still maintains a settled entry for that value, ledger state has diverged and warrants visibility.
+## Decision: treat VOIDED record with identical B value as matching ledger history
+- Rejected: automatically overriding A's total to 0.00 or silently deleting voided records
+- Why: System B has no state/cancellation field and records historical ledger entries as they occurred; since the numerical amounts match, the record reflects historical agreement, while void workflow rules should be handled via operational audit policy.
 
 ## Decision: track date and location differences as auxiliary disagreements
 - Rejected: ignoring all non-monetary metadata differences
