@@ -120,4 +120,34 @@ def compare(
             # If sum_b == a['total'], it is a valid split disbursement and NOT flagged as an error.
             continue
 
+        # Single entry in B
+        e = entries[0]
+        b_val = e.get("value")
+        a_total = a.get("total")
+
+        if b_val is None:
+            disagreements.append(
+                create_disagreement(
+                    reason="VALUE_MISMATCH",
+                    record_id=rid,
+                    location=a.get("location", ""),
+                    a_value=a_total,
+                    b_value=None,
+                    entry_id=e.get("entry_id"),
+                    details=f"Record {rid} has a blank/missing value in System B (raw: '{e.get('value_raw', '')}').",
+                )
+            )
+        elif b_val != a_total:
+            disagreements.append(
+                create_disagreement(
+                    reason="VALUE_MISMATCH",
+                    record_id=rid,
+                    location=a.get("location", ""),
+                    a_value=a_total,
+                    b_value=b_val,
+                    entry_id=e.get("entry_id"),
+                    details=f"Value mismatch for record {rid}: System A has {a_total}, System B has {b_val}.",
+                )
+            )
+
     return disagreements

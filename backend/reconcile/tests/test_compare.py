@@ -76,3 +76,56 @@ def test_split_that_sums_is_not_an_error():
     ]
     results = compare(a, b)
     assert results == []
+
+
+def test_value_mismatch():
+    """Different amounts between A and B are flagged as VALUE_MISMATCH."""
+    a = {"REC-1003": make_a_record("REC-1003", total="121388.01")}
+    b = [make_b_entry("ENT/1", ref="REC-1003", value="94834.38")]
+    results = compare(a, b)
+    assert len(results) == 1
+    assert results[0]["reason"] == "VALUE_MISMATCH"
+    assert results[0]["record_id"] == "REC-1003"
+    assert results[0]["a_value"] == Decimal("121388.01")
+    assert results[0]["b_value"] == Decimal("94834.38")
+    assert results[0]["difference"] == Decimal("26553.63")
+
+
+def test_blank_value_not_treated_as_zero():
+    """A blank B value is flagged as VALUE_MISMATCH and is NOT treated as 0."""
+    a = {"REC-1050": make_a_record("REC-1050", total="0.00")}
+    b = [make_b_entry("ENT/1", ref="REC-1050", value=None)]
+    results = compare(a, b)
+    assert len(results) == 1
+    assert results[0]["reason"] == "VALUE_MISMATCH"
+    assert results[0]["record_id"] == "REC-1050"
+    assert results[0]["b_value"] is None
+    # Ensure it did not treat None as 0 and falsely match A's 0.00
+    assert results[0]["difference"] is None
+
+
+def test_clean_row():
+    """A matching pair produces no disagreements."""
+    a = {"REC-1001": make_a_record("REC-1001", total="500.00", location="LOC-101", date="2026-03-01")}
+    b = [make_b_entry("ENT/1", ref="REC-1001", value="500.00", location="LOC-101", date="2026-03-01")]
+    results = compare(a, b)
+    assert results == []
+
+
+def test_messy_references():
+    """Normalized references match corresponding A records and are not falsely flagged as orphans or missing."""
+    from reconcile.importer import normalize_ref
+
+    raw_refs = ["rec1034", " REC - 1070 ", "1112"]
+    a = {
+        "REC-1034": make_a_record("REC-1034", total="100.00"),
+        "REC-1070": make_a_record("REC-1070", total="200.00"),
+        "REC-1112": make_a_record("REC-1112", total="300.00"),
+    }
+    b = [
+        make_b_entry("ENT/1", ref=normalize_ref(raw_refs[0]), value="100.00"),
+        make_b_entry("ENT/2", ref=normalize_ref(raw_refs[1]), value="200.00"),
+        make_b_entry("ENT/3", ref=normalize_ref(raw_refs[2]), value="300.00"),
+    ]
+    results = compare(a, b)
+    assert results == []
