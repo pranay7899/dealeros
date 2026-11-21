@@ -71,7 +71,7 @@ def compare(
                     )
                 )
 
-    # 2. MISSING_IN_B: A record has no B entry
+    # 2. MISSING_IN_B & Multi-entry checks
     for rid, a in a_rows.items():
         entries = by_ref.get(rid, [])
         if not entries:
@@ -85,5 +85,39 @@ def compare(
                     details=f"Record {rid} present in System A but absent from System B.",
                 )
             )
+            continue
+
+        vals = [e.get("value") for e in entries]
+
+        # Multi-entry in B (Splits vs Duplicates)
+        if len(entries) > 1:
+            if any(v is None for v in vals):
+                disagreements.append(
+                    create_disagreement(
+                        reason="VALUE_MISMATCH",
+                        record_id=rid,
+                        location=a.get("location", ""),
+                        a_value=a.get("total"),
+                        b_value=None,
+                        details=f"Record {rid} has multiple B entries with missing/unparseable values.",
+                    )
+                )
+                continue
+
+            sum_b = sum(vals)
+            if sum_b != a.get("total"):
+                disagreements.append(
+                    create_disagreement(
+                        reason="DUPLICATE_IN_B",
+                        record_id=rid,
+                        location=a.get("location", ""),
+                        a_value=a.get("total"),
+                        b_value=sum_b,
+                        details=f"Record {rid} has {len(entries)} entries in System B summing to {sum_b}, which differs from System A total {a.get('total')}.",
+                    )
+                )
+                continue
+            # If sum_b == a['total'], it is a valid split disbursement and NOT flagged as an error.
+            continue
 
     return disagreements
