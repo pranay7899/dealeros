@@ -55,7 +55,23 @@ def compare(
         ref = e.get("ref")
         by_ref.setdefault(ref, []).append(e)
 
-    # 1. MISSING_IN_B: A record has no B entry
+    # 1. ORPHAN_IN_B: A B entry points at a record that is not in A
+    for ref, entries in by_ref.items():
+        if not ref or ref not in a_rows:
+            for e in entries:
+                disagreements.append(
+                    create_disagreement(
+                        reason="ORPHAN_IN_B",
+                        record_id=ref or e.get("entry_id", ""),
+                        location=e.get("location", ""),
+                        a_value=None,
+                        b_value=e.get("value"),
+                        entry_id=e.get("entry_id"),
+                        details=f"Entry {e.get('entry_id')} in System B references unknown record '{ref}'.",
+                    )
+                )
+
+    # 2. MISSING_IN_B: A record has no B entry
     for rid, a in a_rows.items():
         entries = by_ref.get(rid, [])
         if not entries:
