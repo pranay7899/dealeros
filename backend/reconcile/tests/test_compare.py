@@ -129,3 +129,24 @@ def test_messy_references():
     ]
     results = compare(a, b)
     assert results == []
+
+
+def test_location_mismatch():
+    """Same record with different location in System B is flagged as LOCATION_MISMATCH."""
+    a = {"REC-1077": make_a_record("REC-1077", total="400.00", location="LOC-102")}
+    b = [make_b_entry("ENT/1", ref="REC-1077", value="400.00", location="LOC-201")]
+    results = compare(a, b)
+    assert len(results) == 1
+    assert results[0]["reason"] == "LOCATION_MISMATCH"
+    assert results[0]["record_id"] == "REC-1077"
+    assert results[0]["location"] == "LOC-102"
+
+
+def test_date_mismatch():
+    """Same record with different date in System B is flagged as DATE_MISMATCH."""
+    a = {"REC-1009": make_a_record("REC-1009", total="400.00", date="2026-03-31")}
+    b = [make_b_entry("ENT/1", ref="REC-1009", value="400.00", date="2026-04-02")]
+    results = compare(a, b)
+    assert len(results) == 1
+    assert results[0]["reason"] == "DATE_MISMATCH"
+    assert results[0]["record_id"] == "REC-1009"

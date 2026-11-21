@@ -150,4 +150,35 @@ def compare(
                 )
             )
 
+        # Auxiliary checks: Location and Date mismatches
+        a_loc = (a.get("location") or "").strip()
+        b_loc = (e.get("location") or "").strip()
+        if a_loc and b_loc and a_loc != b_loc:
+            disagreements.append(
+                create_disagreement(
+                    reason="LOCATION_MISMATCH",
+                    record_id=rid,
+                    location=a_loc,
+                    a_value=a_total,
+                    b_value=b_val,
+                    entry_id=e.get("entry_id"),
+                    details=f"Location mismatch for record {rid}: System A has {a_loc}, System B has {b_loc}.",
+                )
+            )
+
+        a_date = str(a.get("date") or "").strip()
+        b_date = str(e.get("date") or "").strip()
+        if a_date and b_date and a_date != b_date:
+            disagreements.append(
+                create_disagreement(
+                    reason="DATE_MISMATCH",
+                    record_id=rid,
+                    location=a_loc,
+                    a_value=a_total,
+                    b_value=b_val,
+                    entry_id=e.get("entry_id"),
+                    details=f"Date mismatch for record {rid}: System A recorded {a_date}, System B recorded {b_date}.",
+                )
+            )
+
     return disagreements
