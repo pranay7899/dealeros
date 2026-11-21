@@ -31,7 +31,6 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Load available orgs from API on mount
   useEffect(() => {
     fetch('/api/orgs/')
       .then((res) => (res.ok ? res.json() : ['ORG-A', 'ORG-B']))
@@ -43,9 +42,7 @@ export default function App() {
           }
         }
       })
-      .catch(() => {
-        // Fallback to defaults
-      });
+      .catch(() => {});
   }, []);
 
   const fetchDisagreements = useCallback(() => {
